@@ -1,1 +1,248 @@
+#Import os module to interact with the operating system
+#import os
+# Define the path to the directory containing aggregated state data using my local file system
+#path = r"C:\Users\DhivyaBharthi\Desktop\GUVI\Phonepay\data\aggregated\transaction\country\india\state"
+#if os.path.exists(path):
+    #Agg_state_list = os.listdir(path) # List all files in the directory
+    #print(Agg_state_list)
+#else:
+   # print("Path does not exist:", path)
+
+#Required libraries for the program before install pandas pip install pandas
+import pandas as pd
+import json
+import os
+import pymysql 
+# Set path to data for Aggregated Transaction Data set:1
+
+path = r"C:\Users\DhivyaBharthi\Desktop\GUVI\Phonepay\data\aggregated\transaction\country\india\state"
+
+Agg_state_list = os.listdir(path)
+
+Trans = {
+    'State': [], 'Year': [], 'Quarter': [],
+    'Transaction_type': [], 'Transaction_count': [], 'Transaction_amount': []
+}
+
+for i in Agg_state_list:
+    p_i = os.path.join(path, i)
+    if not os.path.isdir(p_i):
+        continue
+
+    Agg_yr = os.listdir(p_i)
+
+    for j in Agg_yr:
+        p_j = os.path.join(p_i, j)
+        if not os.path.isdir(p_j):
+            continue
+
+        Agg_yr_list = os.listdir(p_j)
+
+        for k in Agg_yr_list:
+            p_k = os.path.join(p_j, k)
+            if not os.path.isfile(p_k):
+                continue
+
+            with open(p_k, 'r') as Data:
+                try:
+                    D = json.load(Data)
+                    if D.get('data') and isinstance(D['data'], dict) and 'transactionData' in D['data']:
+                        for z in D['data']['transactionData']:
+                            name = z['name']
+                            count = z['paymentInstruments'][0]['count']
+                            amount = z['paymentInstruments'][0]['amount']
+                            Trans['Transaction_type'].append(name)
+                            Trans['Transaction_count'].append(count)
+                            Trans['Transaction_amount'].append(amount)
+                            Trans['State'].append(i)
+                            Trans['Year'].append(j)
+                            Trans['Quarter'].append(int(k.strip('.json')))
+
+                except Exception as e:
+                    print(f"Error loading {p_k}: {e}")
+
+Agg_Trans = pd.DataFrame(Trans)
+
+# Show the DataFrame
+print("DataFrame Shape:", Agg_Trans.shape)
+print(Agg_Trans.head())
+
+# Set Path to the Aggregated Insurance data folder Date Set:2
+
+path = r"C:\Users\DhivyaBharthi\Desktop\GUVI\Phonepay\data\aggregated\insurance\country\india\state"
+
+# Check if the path exists
+if not os.path.exists(path):
+    print("Path does not exist:", path)
+    exit()
+
+# List of states
+Ins_state_list = os.listdir(path)
+
+# Initialize dictionary to collect data
+Ins = {
+    'State': [], 'Year': [], 'Quarter': [],
+    'Transaction_type': [], 'Transaction_count': [], 'Transaction_amount': []
+}
+
+# Loop through states, years, quarters, and JSON files
+for i in Ins_state_list:
+    p_i = os.path.join(path, i)
+    if not os.path.isdir(p_i):
+        continue
+
+    Ins_yr = os.listdir(p_i)
+    for j in Ins_yr:
+        p_j = os.path.join(p_i, j)
+        if not os.path.isdir(p_j):
+            continue
+
+        Ins_yr_list = os.listdir(p_j)
+        for k in Ins_yr_list:
+            p_k = os.path.join(p_j, k)
+            if not os.path.isfile(p_k):
+                continue
+
+            with open(p_k, 'r') as Data:
+                try:
+                    D = json.load(Data)
+                    if D.get('data') and 'transactionData' in D['data']:
+                        for z in D['data']['transactionData']:
+                            name = z['name']
+                            count = z['paymentInstruments'][0]['count']
+                            amount = z['paymentInstruments'][0]['amount']
+                            Ins['Transaction_type'].append(name)
+                            Ins['Transaction_count'].append(count)
+                            Ins['Transaction_amount'].append(amount)
+                            Ins['State'].append(i)
+                            Ins['Year'].append(j)
+                            Ins['Quarter'].append(int(k.strip('.json')))
+                except Exception as e:
+                    print(f"Error loading {p_k}: {e}")
+
+# Create DataFrame
+Agg_insurance = pd.DataFrame(Ins)
+
+# Output
+print("Shape:", Agg_insurance.shape)
+print(Agg_insurance.head())
+
+# # Set Path to the Aggregated User data folder Date Set:3
+
+path = r"C:\Users\DhivyaBharthi\Desktop\GUVI\Phonepay\data\aggregated\user\country\india\state"
+user_state_list = os.listdir(path)
+
+#  Define the dictionary OUTSIDE the loop
+user = {
+    'State': [],
+    'Year': [],
+    'Quater': [],
+    'Brand_type': [],
+    'Registered_count': [],
+    'Percentage_Userdevices': []
+}
+
+# Loop through all JSON files and extract data
+for i in user_state_list:
+   p_i = os.path.join(path, i)
+   user_yr = os.listdir(p_i)
+
+   for j in user_yr:
+       p_j = os.path.join(p_i, j)
+       user_yr_list = os.listdir(p_j)
+
+       for k in user_yr_list:
+            p_k = os.path.join(p_j, k)
+            with open(p_k, 'r') as Data:
+                D = json.load(Data)
+
+                if D['data']['usersByDevice'] is not None:
+                    for z in D['data']['usersByDevice']:
+                        Name = z.get('brand', 'Unknown')
+                        count = z.get('count', 0)
+                        Percentage = z.get('percentage', 0.0)
+
+                        user['Brand_type'].append(Name)
+                        user['Registered_count'].append(count)
+                        user['Percentage_Userdevices'].append(Percentage)
+                        user['State'].append(i)
+                        user['Year'].append(j)
+                        user['Quater'].append(int(k.strip('.json')))
+
+#  Create DataFrame
+Agg_user = pd.DataFrame(user)
+print("Shape:", Agg_user.shape)
+
+# Optional: Preview the data
+print(Agg_user.head())
+
+# Step 1: Connect to MySQL Server
+Connection = pymysql.connect(
+    host='localhost',
+    user='root',
+    password='12345',
+    database='Phonepay_DB'  # Make sure this DB already exists
+)
+print(" Connected to MySQL")
+
+# Step 2: Create Cursor
+cursor = Connection.cursor()
+print("Cursor created")
+
+#Insert data into the MySQL database
+# Step 3: Insert Transaction Data
+# Ensure the Transaction table exists before inserting data
+
+# ========== Insert Functions ==========
+def insert_transaction_data(df):
+    # Ensure that 'Transaction_count' does not exceed MySQL INT limits
+    # MySQL INT max value is 2147483647
+    
+    df = df[df['Transaction_count'] <= 2147483647]
+    query = """
+        INSERT INTO Agg_Transaction (State, Year, Quarter, Transaction_type, Transaction_count, Transaction_amount)
+        VALUES (%s, %s, %s, %s, %s, %s)
+    """
+    data = [tuple(row) for row in df.to_numpy()]
+    cursor.executemany(query, data)
+    Connection.commit()
+    print(" Transaction data inserted")
+
+def insert_insurance_data(df):
+    df = df[df['Transaction_count'] <= 2147483647]
+    query = """
+        INSERT INTO Agg_Insurance (State, Year, Quarter, Transaction_type, Transaction_count, Transaction_amount)
+        VALUES (%s, %s, %s, %s, %s, %s)
+    """
+    data = [tuple(row) for row in df.to_numpy()]
+    cursor.executemany(query, data)
+    Connection.commit()
+    print("Insurance data inserted")
+
+def insert_user_data(df):
+
+    def insert_user_data(df):
+     print("Agg_user Columns:", df.columns.tolist())  # Debug
+    df = df[['State', 'Year', 'Brand_type', 'Registered_count', 'Percentage_Userdevices']]
+    query = """
+    INSERT INTO Agg_User (State, Year, Brand_type, Registered_count, Percentage_Userdevices)
+    VALUES (%s, %s, %s, %s, %s)
+    """
+    data = list(df.itertuples(index=False, name=None))
+    cursor.executemany(query, data)
+    Connection.commit()
+    print("User data inserted")
+    print("Agg_user Columns:", df.columns.tolist())  # Debug
+
+
+# ========== Call Insert Functions ==========
+insert_transaction_data(Agg_Trans)
+insert_insurance_data(Agg_insurance)
+insert_user_data(Agg_user)
+
+#  Close connection
+Connection.close()
+print(" All data inserted and MySQL connection closed.")
+
+
 
