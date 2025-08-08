@@ -1,0 +1,834 @@
+import pymysql
+import pandas as pd
+
+# Connect to MySQL
+connection = pymysql.connect(
+    host='localhost',
+    user='root',
+    password='12345',
+    database='phonepay_db'
+)
+#Group by State and Quarter – Total Transaction Amount
+query1 = """
+    SELECT State,Year,Quarter,SUM(Transaction_amount) AS Total_Amount    
+    FROM agg_transaction
+    GROUP BY State, Year, Quarter
+    ORDER BY Total_Amount DESC
+    LIMIT 10
+"""
+# Execute SQL query using pandas
+df = pd.read_sql(query1, connection)
+print("Quarter-wise Aggregated by State, Year, Quarter:")
+print(df)
+
+# Group by State and Year – Total Transactions
+query2 = """
+SELECT State, Year, 
+       SUM(Transaction_count) AS Yearly_Transactions,
+       SUM(Transaction_amount) AS Yearly_Amount
+FROM agg_transaction
+WHERE Year = 2023
+GROUP BY State, Year
+ORDER BY State, Year
+LIMIT 10
+"""
+df2 = pd.read_sql(query2, connection)
+print("Year-wise Aggregated by State, Year:")
+print(df2)
+
+#  Group by Transaction Type – Overall Category Trends
+query3 = """
+SELECT Transaction_type, SUM(Transaction_count) AS Total_Transactions
+FROM agg_transaction
+WHERE Quarter = 1 AND Year = 2023
+GROUP BY Transaction_type
+ORDER BY Total_Transactions ASC
+LIMIT 5
+"""
+df3 = pd.read_sql(query3, connection)
+print("Overall Category Trends- Transaction Type:")
+print(df3)
+
+
+# 4. Quarters Showing Decline or Stagnation (Optional Analysis)
+query4 = """
+SELECT State,Year,Quarter,
+SUM(Transaction_amount) AS Total_Amount
+FROM agg_transaction
+GROUP BY State, Year, Quarter
+HAVING SUM(Transaction_amount) < 100000
+ORDER BY Total_Amount ASC
+LIMIT 4
+"""
+df4 = pd.read_sql(query4, connection)
+print("Quarters Showing Decline or Stagnation:")
+print(df4)
+
+# 5. Quarters Showing Decline or Stagnation (Optional Analysis)
+query5 = """
+SELECT State,Year,Quarter,
+SUM(Transaction_amount) AS Total_Amount
+FROM agg_transaction
+GROUP BY State, Year, Quarter
+HAVING SUM(Transaction_amount) < 100000
+ORDER BY Total_Amount ASC
+LIMIT 4
+"""
+df5 = pd.read_sql(query5, connection)
+print("Quarters Showing Decline or Stagnation:")
+print(df5)
+
+# Close the connection
+connection.close()
+
+====================================================
+# 6.Analyze insurance-related transactions
+# 1. df1 - Total Insurance Users and Amount by State
+query1 = """
+SELECT 
+    State,
+    SUM(User_count) AS Total_Users,
+    SUM(User_amount) AS Total_Amount
+FROM map_transaction
+GROUP BY State
+ORDER BY Total_Amount DESC;"""
+df1 = pd.read_sql(query1, connection)
+
+# 2. df2 - Year-wise Insurance Uptake by State
+query2 = """
+SELECT 
+    State,
+    Year,
+    SUM(User_count) AS Yearly_Users,
+    SUM(User_amount) AS Yearly_Amount
+FROM map_transaction
+GROUP BY State, Year
+ORDER BY State, Year
+LIMIT 10;
+"""
+df2 = pd.read_sql(query2, connection)
+
+# 3. df3 - Quarterly Insurance Trend by State
+query3 = """
+SELECT 
+    State,
+    Year,
+    Quarter,
+    SUM(User_count) AS Quarterly_Users,
+    SUM(User_amount) AS Quarterly_Amount
+FROM map_transaction
+GROUP BY State, Year, Quarter
+ORDER BY State, Year, Quarter
+LIMIT 10;
+"""
+df3 = pd.read_sql(query3, connection)
+
+# 4. df4 - District-wise Insurance Uptake for All States
+query4 = """
+SELECT 
+    State,
+    District,
+    SUM(User_count) AS Total_Users,
+    SUM(User_amount) AS Total_Amount
+FROM map_transaction
+GROUP BY State, District
+ORDER BY State, Total_Amount DESC
+LIMIT 10;
+"""
+df4 = pd.read_sql(query4, connection)
+
+# 5. df5 - Districts with Low Insurance Activity (User_count < 1000)
+query5 = """
+SELECT 
+    State,
+    District,
+    SUM(User_count) AS Total_Users,
+    SUM(User_amount) AS Total_Amount
+FROM map_transaction
+GROUP BY State, District
+HAVING SUM(User_count) < 10000
+ORDER BY Total_Users ASC
+LIMIT 10;
+"""
+df5 = pd.read_sql(query5, connection)
+
+# Close the connection
+connection.close()
+
+# Print sample outputs
+print(" df1 - Total by State:\n", df1.head())
+print(" df2 - Year-wise by State:\n", df2.head())
+print(" df3 - Quarter-wise by State:\n", df3.head())
+print(" df4 - District-wise Details:\n", df4.head())
+print(" df5 - Low Activity Districts:\n", df5.head())
+
+====================================================================
+
+#7. Transaction Analysis Across States and Districts
+
+# 1. df1 - Top 10 States by Transaction Value
+query1 = """
+SELECT State,SUM(User_amount) AS Total_Amount,SUM(User_count) AS Total_Users
+FROM map_transaction
+GROUP BY State
+ORDER BY Total_Amount DESC
+LIMIT 10
+"""
+df1 = pd.read_sql(query1, connection)
+
+# 2. df2 - Top 10 Districts by Transaction Volume
+query2 = """
+SELECT State,District,SUM(User_count) AS Total_Users,SUM(User_amount) AS Total_Amount
+FROM map_transaction
+GROUP BY State, District
+ORDER BY Total_Users DESC
+LIMIT 10
+"""
+df2 = pd.read_sql(query2, connection)
+
+# 3. df3 - Quarterly Trend in High-performing States (User_amount > 10 million)
+query3 = """
+SELECT State,Year,Quarter,SUM(User_count) AS Total_Users,SUM(User_amount) AS Total_Amount
+FROM map_transaction
+GROUP BY State, Year, Quarter
+HAVING SUM(User_amount) > 10000000
+ORDER BY Total_Amount DESC
+Limit 10
+"""
+df3 = pd.read_sql(query3, connection)
+
+# 4. df4 - Districts with Low Transaction Activity (User_count < 1000)
+query4 = """
+SELECT State,District,SUM(User_count) AS Total_Users,SUM(User_amount) AS Total_Amount
+FROM map_transaction
+GROUP BY State, District
+HAVING SUM(User_count) < 1000
+ORDER BY Total_Users ASC
+LIMIT 10
+"""
+df4 = pd.read_sql(query4, connection)
+
+# 5. df5 - Year-over-Year Growth Trend by State
+query5 = """
+SELECT State,Year,SUM(User_count) AS Yearly_Users,SUM(User_amount) AS Yearly_Amount
+FROM map_transaction
+GROUP BY State, Year
+ORDER BY State, Year
+LIMIT 10
+"""
+df5 = pd.read_sql(query5, connection)
+
+# Close the connection
+connection.close()
+
+# Optional: print sample results
+print(" df1 - Top 10 States by Transaction Value:\n", df1.head())
+print(" df2 - Top 10 Districts by Transaction Volume:\n", df2.head())
+print(" df3 - Quarterly Trend in High-performing States:\n", df3.head())
+print(" df4 - Districts with Low Transaction Activity:\n", df4.head())
+print(" df5 - Year-over-Year Growth Trend:\n", df5.head())
+
+
+==================================================================================
+
+#9. Insurance Transactions Analysis
+# 1. Top States by Insurance Transaction Amount
+query1 = f"""
+SELECT State,SUM(User_amount) AS Total_Amount,SUM(User_count) AS Total_Users
+FROM map_insurance
+WHERE Year = year AND Quarter = quarter
+GROUP BY State
+ORDER BY Total_Amount DESC
+LIMIT 10
+"""
+df1 = pd.read_sql(query1, connection)
+
+# 2. Top Districts by Insurance Transaction Volume
+query2 = f"""
+SELECT State,District,SUM(User_count) AS Total_Users,SUM(User_amount) AS Total_Amount
+FROM map_insurance
+WHERE Year = year AND Quarter = quarter
+GROUP BY State, District
+ORDER BY Total_Users DESC
+LIMIT 10
+"""
+df2 = pd.read_sql(query2, connection)
+
+# 3. Insurance Quarterly Trends by State
+query3 = """
+SELECT State,Year,Quarter,SUM(User_amount) AS Total_Amount,SUM(User_count) AS Total_Users
+FROM map_insurance
+GROUP BY State, Year, Quarter
+ORDER BY State, Year, Quarter
+LIMIT 10
+"""
+df3 = pd.read_sql(query3, connection)
+
+# 4. Districts with Low Insurance Activity (Threshold < 1000 users)
+query4 = f"""SELECT State,District, SUM(User_count) AS Total_Users,SUM(User_amount) AS Total_Amount
+FROM map_insurance
+WHERE Year = year AND Quarter = quarter
+GROUP BY State, District
+HAVING Total_Users < 1000
+ORDER BY Total_Users ASC
+LIMIT 10
+"""
+df4 = pd.read_sql(query4, connection)
+
+# 5. Year-over-Year Insurance Growth by State
+query5 = """
+SELECT State,Year,SUM(User_count) AS Yearly_Users,SUM(User_amount) AS Yearly_Amount
+FROM map_insurance
+GROUP BY State, Year
+ORDER BY State, Year
+LIMIT 10
+"""
+df5 = pd.read_sql(query5, connection)
+
+# === Close the Connection ===
+connection.close()
+
+# Print Results
+print("\n Top 10 States by Insurance Transaction Amount:")
+print(df1)
+
+print("\n Top 10 Districts by Insurance Transaction Volume:")
+print(df2)
+
+print("\n Insurance Quarterly Trends by State:")
+print(df3)
+
+print("\n Districts with Low Insurance Activity:")
+print(df4)
+
+print("\n Year-over-Year Insurance Growth by State:")
+print(df5)
+
+========================================================================
+
+#2. Device Dominance and User Engagement Analysis
+
+# 1. Query - Underutilized Brands
+query1 = """
+SELECT State, Brand_type, Registered_count, Percentage_Userdevices
+FROM agg_user
+WHERE Registered_count > 1000 
+AND Percentage_Userdevices < 0.1
+ORDER BY Percentage_Userdevices ASC
+LIMIT 10
+"""
+df = pd.read_sql(query1, connection)
+
+# 2. Top 5 Device Brands by Registration in Each State
+
+query2 = """
+SELECT Year, Brand_type, SUM(Registered_count) AS Yearly_Registrations
+FROM agg_user
+GROUP BY Year, Brand_type
+ORDER BY Year, Yearly_Registrations DESC
+LIMIT 10
+"""
+df2 = pd.read_sql(query2, connection)
+
+# 3. Trend by Year - Top Brands
+query3 = """
+SELECT 
+Year, 
+    Brand_type, 
+    SUM(Registered_count) AS Yearly_Registrations
+FROM agg_user
+GROUP BY Year, Brand_type
+ORDER BY Year, Yearly_Registrations DESC
+LIMIT 10
+"""
+df3 = pd.read_sql(query3, connection)
+
+connection.close()
+
+print("Underutilized Brands:\n", df)
+print("Top 5 Device Brands by Registration in Each State:\n", df2)
+print("Trend by Year - Top Brands:\n", df3)
+
+
+=====================================================================
+Streamlit Application:
+
+import streamlit as st
+import pandas as pd
+import pymysql
+
+# Connect to DB
+connection = pymysql.connect(
+    host="localhost",
+    user="root",
+    password="12345",
+    database="phonepay_db"
+)
+
+st.set_page_config(page_title="PhonePe Insights", layout="wide")
+st.title("📊 PhonePe Transaction Casestudy:1")
+
+# Dropdowns
+st.sidebar.header("📅 Filter Options")
+years = list(range(2018, 2024))
+quarters = [1, 2, 3, 4]
+selected_year = st.sidebar.selectbox("Select Year", years)
+selected_quarter = st.sidebar.selectbox("Select Quarter", quarters)
+
+# Query 1: Top 10 by Transaction Amount
+query1 = f"""
+SELECT State, Year, Quarter, SUM(Transaction_amount) AS Total_Amount
+FROM agg_transaction
+WHERE Year = {selected_year} AND Quarter = {selected_quarter}
+GROUP BY State, Year, Quarter
+ORDER BY Total_Amount DESC
+LIMIT 10
+"""
+df1 = pd.read_sql(query1, connection)
+st.subheader("🔝 Top 10 States by Transaction Amount")
+st.dataframe(df1)
+st.bar_chart(df1.set_index("State")["Total_Amount"])
+
+# Query 2: Yearly Totals
+query2 = f"""
+SELECT State, Year, 
+       SUM(Transaction_count) AS Yearly_Transactions,
+       SUM(Transaction_amount) AS Yearly_Amount
+FROM agg_transaction
+WHERE Year = {selected_year}
+GROUP BY State, Year
+ORDER BY Yearly_Amount DESC
+LIMIT 10
+"""
+df2 = pd.read_sql(query2, connection)
+st.subheader("📅 Yearly Aggregated Transactions")
+st.dataframe(df2)
+st.line_chart(df2.set_index("State")["Yearly_Amount"])
+
+# Query 3: Transaction Types
+query3 = f"""
+SELECT Transaction_type, SUM(Transaction_count) AS Total_Transactions
+FROM agg_transaction
+WHERE Quarter = {selected_quarter} AND Year = {selected_year}
+GROUP BY Transaction_type
+ORDER BY Total_Transactions ASC
+"""
+df3 = pd.read_sql(query3, connection)
+st.subheader("📂 Transaction Type Trends")
+st.dataframe(df3)
+st.bar_chart(df3.set_index("Transaction_type")["Total_Transactions"])
+
+# Close connection
+connection.close()
+
+===========================================================
+#Stream2.py
+
+# --- Streamlit Config ---
+st.set_page_config(page_title="📍 PhonePe Insurance Analysis", layout="wide")
+st.title("📍 Insurance Transactions in India - PhonePe Analysis Casestudy:2")
+
+# --- Load India States GeoJSON ---
+geo_url = "https://gist.githubusercontent.com/jbrobst/56c13bbbf9d97d187fea01ca62ea5112/raw/e388c4cae20aa53cb5090210a42ebb9b765c0a36/india_states.geojson"
+india_geojson = requests.get(geo_url).json()
+
+# --- MySQL Connection ---
+connection = pymysql.connect(
+    host='localhost',
+    user='root',
+    password='12345',
+    database='phonepay_db'
+)
+
+# --- SQL Queries ---
+
+query2 = """
+SELECT State, Year, SUM(User_count) AS Yearly_Users, SUM(User_amount) AS Yearly_Amount
+FROM map_transaction GROUP BY State, Year ORDER BY State, Year LIMIT 10;
+"""
+df2 = pd.read_sql(query2, connection)
+
+query3 = """
+SELECT State, Year, Quarter, SUM(User_count) AS Quarterly_Users, SUM(User_amount) AS Quarterly_Amount
+FROM map_transaction GROUP BY State, Year, Quarter ORDER BY State, Year, Quarter LIMIT 10;
+"""
+df3 = pd.read_sql(query3, connection)
+
+query4 = """
+SELECT State, District, SUM(User_count) AS Total_Users, SUM(User_amount) AS Total_Amount
+FROM map_transaction GROUP BY State, District ORDER BY State, Total_Amount DESC LIMIT 10;
+"""
+df4 = pd.read_sql(query4, connection)
+
+query5 = """
+SELECT State, District, SUM(User_count) AS Total_Users, SUM(User_amount) AS Total_Amount
+FROM map_transaction GROUP BY State, District
+HAVING SUM(User_count) < 10000 ORDER BY Total_Users ASC LIMIT 10;
+"""
+df5 = pd.read_sql(query5, connection)
+
+connection.close()
+
+# --- SECTION 2: Bar Chart (df2) ---
+st.subheader("📊 Year-wise Insurance Uptake (Top 10 entries)")
+
+fig_year = px.bar(
+    df2,
+    x="State",
+    y="Yearly_Amount",
+    color="Year",
+    text="Yearly_Users",
+    barmode="group",
+    title="Year-wise Insurance Uptake"
+)
+st.plotly_chart(fig_year, use_container_width=True)
+
+# --- SECTION 3: Line Chart (df3) ---
+st.subheader("📈 Quarterly Insurance Trend (Top 10 entries)")
+
+fig_quarter = px.line(
+    df3,
+    x="Quarter",
+    y="Quarterly_Amount",
+    color="State",
+    markers=True,
+    title="Quarterly Insurance Trend"
+)
+st.plotly_chart(fig_quarter, use_container_width=True)
+
+# --- SECTION 4: District-wise Uptake (df4) ---
+st.subheader("🏙️ Top 10 Districts by Insurance Amount")
+
+fig_dist = px.bar(
+    df4,
+    x="District",
+    y="Total_Amount",
+    color="State",
+    text="Total_Users",
+    title="Top Districts by Total Amount"
+)
+st.plotly_chart(fig_dist, use_container_width=True)
+
+# --- SECTION 5: Low Activity Districts (df5) ---
+st.subheader("⚠️ Districts with Low Insurance Activity (User_count < 10000)")
+
+fig_low = px.bar(
+    df5,
+    x="District",
+    y="Total_Users",
+    color="State",
+    text="Total_Amount",
+    title="Low Activity Districts"
+)
+st.plotly_chart(fig_low, use_container_width=True)
+
+=====================================================================================
+Stream3.py
+
+st.set_page_config(page_title=" Transaction Analysis Across States and DistrictsCasestudy:3", layout="wide")
+
+# --- Sidebar Navigation ---
+st.sidebar.title("📌 Navigation")
+page = st.sidebar.radio("Select Query View:", [
+    "Top 10 States by Transaction Value",
+    "Top 10 Districts by Transaction Volume",
+    "High-performing States (Quarterly Trend)",
+    "Districts with Low Transaction Activity",
+    "Year-over-Year Growth by State"
+])
+
+# --- MySQL Connection ---
+def get_data():
+    connection = pymysql.connect(
+        host='localhost',
+        user='root',
+        password='12345',
+        database='phonepay_db'
+    )
+
+    queries = {
+        "Top 10 States by Transaction Value": """
+            SELECT State, SUM(User_amount) AS Total_Amount, SUM(User_count) AS Total_Users
+            FROM map_transaction
+            GROUP BY State
+            ORDER BY Total_Amount DESC
+            LIMIT 10
+        """,
+
+        "Top 10 Districts by Transaction Volume": """
+            SELECT State, District, SUM(User_count) AS Total_Users, SUM(User_amount) AS Total_Amount
+            FROM map_transaction
+            GROUP BY State, District
+            ORDER BY Total_Users DESC
+            LIMIT 10
+        """,
+
+        "High-performing States (Quarterly Trend)": """
+            SELECT State, Year, Quarter, SUM(User_count) AS Total_Users, SUM(User_amount) AS Total_Amount
+            FROM map_transaction
+            GROUP BY State, Year, Quarter
+            HAVING SUM(User_amount) > 10000000
+            ORDER BY Total_Amount DESC
+            LIMIT 10
+        """,
+
+        "Districts with Low Transaction Activity": """
+            SELECT State, District, SUM(User_count) AS Total_Users, SUM(User_amount) AS Total_Amount
+            FROM map_transaction
+            GROUP BY State, District
+            HAVING SUM(User_count) < 1000
+            ORDER BY Total_Users ASC
+            LIMIT 10
+        """,
+
+        "Year-over-Year Growth by State": """
+            SELECT State, Year, SUM(User_count) AS Yearly_Users, SUM(User_amount) AS Yearly_Amount
+            FROM map_transaction
+            GROUP BY State, Year
+            ORDER BY State, Year
+            LIMIT 10
+        """
+    }
+
+    df = pd.read_sql(queries[page], connection)
+    connection.close()
+    return df
+
+# --- Display Data and Visualizations ---
+df = get_data()
+
+st.title(f"📈 {page}")
+st.dataframe(df)
+
+# --- Chart Visualizations ---
+if page == "Top 10 States by Transaction Value":
+    fig = px.bar(df, x="State", y="Total_Amount", color="State", title="Top 10 States by Transaction Value")
+    st.plotly_chart(fig, use_container_width=True)
+
+elif page == "Top 10 Districts by Transaction Volume":
+    fig = px.bar(df, x="District", y="Total_Users", color="State", title="Top 10 Districts by User Count")
+    st.plotly_chart(fig, use_container_width=True)
+
+elif page == "High-performing States (Quarterly Trend)":
+    fig = px.line(df, x="Quarter", y="Total_Amount", color="State", line_group="Year",
+                  title="Quarterly Trend in High-performing States", markers=True)
+    st.plotly_chart(fig, use_container_width=True)
+
+elif page == "Districts with Low Transaction Activity":
+    fig = px.bar(df, x="District", y="Total_Users", color="State", title="Low Activity Districts (User Count < 1000)")
+    st.plotly_chart(fig, use_container_width=True)
+
+elif page == "Year-over-Year Growth by State":
+    fig = px.line(df, x="Year", y="Yearly_Amount", color="State", markers=True, title="YoY Growth by State")
+    st.plotly_chart(fig, use_container_width=True)
+
+===================================================================
+Stream4.py
+
+# --- Streamlit Page Config ---
+st.set_page_config(page_title="📊 Insurance Transactions Analysis", layout="wide")
+st.title("📊 Map Insurance Transactions Analysis Dashboard CaseStudy:4")
+
+# --- Sidebar Filters ---
+st.sidebar.header("Filter Data")
+year = st.sidebar.selectbox("Select Year", [2018, 2019, 2020, 2021, 2022, 2023])
+quarter = st.sidebar.selectbox("Select Quarter", [1, 2, 3, 4])
+
+# --- MySQL Connection ---
+@st.cache_resource
+def get_connection():
+    """Create and cache a MySQL connection."""
+    return pymysql.connect(
+        host='localhost',
+        user='root',
+        password='12345',
+        database='phonepay_db'
+    )
+
+# --- Query Function ---
+def run_query(query):
+    conn = get_connection()
+    df = pd.read_sql(query, conn)
+    return df
+
+# --- Queries with Filters ---
+df1 = run_query("""
+    SELECT State, SUM(User_amount) AS Total_Amount, SUM(User_count) AS Total_Users
+    FROM map_insurance
+    GROUP BY State
+    ORDER BY Total_Amount DESC
+    LIMIT 10;
+""")
+
+df2 = run_query(f"""
+    SELECT State, District, SUM(User_count) AS Total_Users, SUM(User_amount) AS Total_Amount
+    FROM map_insurance
+    WHERE Year = {year} AND Quarter = {quarter}
+    GROUP BY State, District
+    ORDER BY Total_Users DESC
+    LIMIT 10;
+""")
+
+df3 = run_query("""
+    SELECT State, Year, Quarter, SUM(User_amount) AS Total_Amount, SUM(User_count) AS Total_Users
+    FROM map_insurance
+    GROUP BY State, Year, Quarter
+    ORDER BY State, Year, Quarter
+    LIMIT 10;
+""")
+
+df4 = run_query(f"""
+    SELECT State, District, SUM(User_count) AS Total_Users, SUM(User_amount) AS Total_Amount
+    FROM map_insurance
+    WHERE Year = {year} AND Quarter = {quarter}
+    GROUP BY State, District
+    HAVING SUM(User_count) < 1000
+    ORDER BY Total_Users ASC
+    LIMIT 10;
+""")
+
+df5 = run_query("""
+    SELECT State, Year, SUM(User_count) AS Yearly_Users, SUM(User_amount) AS Yearly_Amount
+    FROM map_insurance
+    GROUP BY State, Year
+    ORDER BY State, Year
+    LIMIT 10;
+""")
+
+# --- Tabs Layout ---
+tab1, tab2, tab3, tab4, tab5 = st.tabs([
+    "🏆 Top States by Amount",
+    "🏙 Top Districts by Volume",
+    "📈 Quarterly Trends",
+    "⚠ Low Activity Districts",
+    "📊 YoY Growth"
+])
+
+# --- Tab 1: Top States ---
+with tab1:
+    st.subheader(f"Top 10 States by Insurance Transaction Amount ({year} Q{quarter})")
+    fig = px.bar(df1, x='State', y='Total_Amount', color='Total_Amount',
+                 title="Top States by Insurance Amount", height=500)
+    st.plotly_chart(fig, use_container_width=True)
+    st.dataframe(df1)
+
+# --- Tab 2: Top Districts ---
+with tab2:
+    st.subheader(f"Top 10 Districts by Insurance Transaction Volume ({year} Q{quarter})")
+    fig = px.bar(df2, x='District', y='Total_Users', color='Total_Users',
+                 title="Top Districts by User Count", height=500)
+    st.plotly_chart(fig, use_container_width=True)
+    st.dataframe(df2)
+
+# --- Tab 3: Quarterly Trends ---
+with tab3:
+    st.subheader("Insurance Quarterly Trends by State")
+    fig = px.line(df3, x='Quarter', y='Total_Amount', color='State',
+                  markers=True, title="Quarterly Amount Trend")
+    st.plotly_chart(fig, use_container_width=True)
+    st.dataframe(df3)
+
+# --- Tab 4: Low Activity Districts ---
+with tab4:
+    st.subheader(f"Districts with Low Insurance Activity (<1000 Users) ({year} Q{quarter})")
+    fig = px.bar(df4, x='District', y='Total_Users', color='Total_Users',
+                 title="Low Activity Districts", height=500)
+    st.plotly_chart(fig, use_container_width=True)
+    st.dataframe(df4)
+
+# --- Tab 5: Year-over-Year Growth ---
+with tab5:
+    st.subheader("Year-over-Year Insurance Growth by State")
+    fig = px.line(df5, x='Year', y='Yearly_Amount', color='State',
+                  markers=True, title="Yearly Insurance Amount Growth")
+    st.plotly_chart(fig, use_container_width=True)
+    st.dataframe(df5)
+
+=================================================================================
+
+Stream5.py
+
+# --- Streamlit Page Config ---
+st.set_page_config(page_title=" Device Dominance & User Engagement", layout="wide")
+
+st.title(" Device Dominance & User Engagement Analysis CaseStudy:5")
+
+# --- MySQL Connection Function ---
+@st.cache_data
+def run_query(query):
+    connection = pymysql.connect(
+        host='localhost',
+        user='root',
+        password='12345',
+        database='phonepay_db'
+    )
+    df = pd.read_sql(query, connection)
+    connection.close()
+    return df
+
+# --- Queries ---
+query1 = """
+SELECT State, Brand_type, Registered_count, Percentage_Userdevices
+FROM agg_user
+WHERE Registered_count > 1000 
+AND Percentage_Userdevices < 0.1
+ORDER BY Percentage_Userdevices ASC
+LIMIT 10
+"""
+
+query2 = """
+SELECT Year, Brand_type, SUM(Registered_count) AS Yearly_Registrations
+FROM agg_user
+GROUP BY Year, Brand_type
+ORDER BY Year, Yearly_Registrations DESC
+LIMIT 10
+"""
+
+query3 = """
+SELECT 
+Year, 
+    Brand_type, 
+    SUM(Registered_count) AS Yearly_Registrations
+FROM agg_user
+GROUP BY Year, Brand_type
+ORDER BY Year, Yearly_Registrations DESC
+LIMIT 10
+"""
+
+# --- Fetch Data ---
+df1 = run_query(query1)
+df2 = run_query(query2)
+df3 = run_query(query3)
+
+# --- Tabs ---
+tab1, tab2, tab3 = st.tabs([
+    "📉 Underutilized Brands",
+    "🏆 Top 5 Device Brands by Year",
+    "📈 Brand Trends Over Years"
+])
+
+# --- Tab 1 ---
+with tab1:
+    st.subheader("📉 Underutilized Brands (Low Usage Despite High Registrations)")
+    st.dataframe(df1)
+    fig1 = px.bar(df1, x="Brand_type", y="Percentage_Userdevices", 
+                  color="State", title="Underutilized Brands by Percentage of User Devices")
+    st.plotly_chart(fig1, use_container_width=True)
+
+# --- Tab 2 ---
+with tab2:
+    st.subheader("🏆 Top 5 Device Brands by Registration in Each Year")
+    st.dataframe(df2)
+    fig2 = px.bar(df2, x="Year", y="Yearly_Registrations", color="Brand_type",
+                  title="Top 5 Device Brands by Yearly Registrations", barmode="group")
+    st.plotly_chart(fig2, use_container_width=True)
+
+# --- Tab 3 ---
+with tab3:
+    st.subheader("📈 Brand Trends Over the Years")
+    st.dataframe(df3)
+    fig3 = px.line(df3, x="Year", y="Yearly_Registrations", color="Brand_type",
+                   markers=True, title="Yearly Registration Trends by Brand")
+    st.plotly_chart(fig3, use_container_width=True)
+
+
